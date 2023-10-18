@@ -38,7 +38,7 @@ public class IQFeedService {
         // Set the protocol version
         setProtocol("6.2");
         registerClientApp("SARP_GUVEN_50892", "1");
-
+        updateFields();
         // Register your application with the feed
 
         requestData("DCORN.Z");
@@ -60,6 +60,17 @@ public class IQFeedService {
 
     public void requestData(String symbol) throws IOException {
         String command = String.format("w%s\r\n", symbol);
+        dataOut.println(command);
+        dataOut.flush();  // Ensure the command is sent immediately
+
+        // Assuming that the data will be received on the next line
+        // (check the IQFeed documentation to confirm how the data will be sent)
+        String response = dataIn.readLine();
+        System.out.println(response);  // This will print the response to the console
+    }
+
+    public void updateFields() throws IOException {
+        String command = "S,SELECT UPDATE FIELDS,Last,Close\r\n";
         dataOut.println(command);
         dataOut.flush();  // Ensure the command is sent immediately
 
