@@ -42,6 +42,12 @@ public class IQFeedService {
         // Register your application with the feed
 
         requestData("DCORN.Z");
+        requestData("DPORN.Z");
+        requestData("TCORA.Z");
+        requestData("TCORD.Z");
+        requestData("TPORA.Z");
+        requestData("TPORD.Z");
+
     }
 
     public void setProtocol(String version) throws IOException {
