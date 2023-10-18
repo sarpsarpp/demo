@@ -30,15 +30,16 @@ public class IQFeedService {
         adminSocket = new Socket(HOST, ADMIN_PORT);
         adminOut = new PrintWriter(adminSocket.getOutputStream(), true);
         adminIn = new BufferedReader(new InputStreamReader(adminSocket.getInputStream()));
+        dataSocket = new Socket(HOST, DATA_PORT);
+        dataOut = new PrintWriter(dataSocket.getOutputStream(), true);
+        dataIn = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()));
         new Thread(this::readResponses).start();
 
         // Set the protocol version
         setProtocol("6.2");
         registerClientApp("SARP_GUVEN_50892", "1");
 
-        dataSocket = new Socket(HOST, DATA_PORT);
-        dataOut = new PrintWriter(dataSocket.getOutputStream(), true);
-        dataIn = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()));
+
 
         // Register your application with the feed
 
