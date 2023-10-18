@@ -39,11 +39,9 @@ public class IQFeedService {
         setProtocol("6.2");
         registerClientApp("SARP_GUVEN_50892", "1");
 
-
-
         // Register your application with the feed
 
-        requestData("AAPL");
+        requestData("DCORN.Z");
     }
 
     public void setProtocol(String version) throws IOException {
