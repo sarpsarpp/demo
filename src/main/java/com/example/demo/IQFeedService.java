@@ -14,46 +14,71 @@ import java.net.Socket;
 public class IQFeedService {
 
     private final String HOST = "127.0.0.1";
-    private final int PORT = 9300;
-    private Socket socket;
-    private PrintWriter out;
-    private BufferedReader in;
+    private final int ADMIN_PORT = 9300;
+    private final int DATA_PORT = 5009;
+
+    private Socket adminSocket;
+    private Socket dataSocket;
+    private PrintWriter adminOut;
+    private PrintWriter dataOut;
+    private BufferedReader adminIn;
+    private BufferedReader dataIn;
 
     @PostConstruct
     public void init() throws IOException {
         // Establish a TCP/IP connection to IQFeed's IQConnect
-        socket = new Socket(HOST, PORT);
-        out = new PrintWriter(socket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        adminSocket = new Socket(HOST, ADMIN_PORT);
+        adminOut = new PrintWriter(adminSocket.getOutputStream(), true);
+        adminIn = new BufferedReader(new InputStreamReader(adminSocket.getInputStream()));
 
+
+        dataSocket = new Socket(HOST, DATA_PORT);
+        dataOut = new PrintWriter(dataSocket.getOutputStream(), true);
+        dataIn = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()));
         // Set the protocol version
         setProtocol("6.2");
 
         // Register your application with the feed
         registerClientApp("SARP_GUVEN_50892", "1");
+
+        requestData("DCORN.Z");
     }
 
     public void setProtocol(String version) throws IOException {
         String command = String.format("S,SET PROTOCOL,%s\r\n", version);
-        out.println(command);
+        adminOut.println(command);
 
-        String response = in.readLine();
+        String response = adminIn.readLine();
         System.out.println(response);  // Log the response
+    }
+
+    public void requestData(String symbol) throws IOException {
+        String command = String.format("w%s\r\n", symbol);
+        dataOut.println(command);
+
+        // Assuming that the data will be received on the next line
+        // (check the IQFeed documentation to confirm how the data will be sent)
+        String response = dataIn.readLine();
+        System.out.println(response);  // This will print the response to the console
     }
 
     public void registerClientApp(String registeredProductId, String productVersion) throws IOException {
         String command = String.format("S,REGISTER CLIENT APP,%s,%s\r\n", registeredProductId, productVersion);
-        out.println(command);
+        adminOut.println(command);
 
-        String response = in.readLine();
+        String response = adminIn.readLine();
         System.out.println(response);  // Log the response
     }
 
     @PreDestroy
     public void cleanup() throws IOException {
         // Close the resources
-        in.close();
-        out.close();
-        socket.close();
+        adminIn.close();
+        adminOut.close();
+        adminSocket.close();
+
+        dataIn.close();
+        dataOut.close();
+        dataSocket.close();
     }
 }
