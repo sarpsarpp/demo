@@ -30,18 +30,19 @@ public class IQFeedService {
         adminSocket = new Socket(HOST, ADMIN_PORT);
         adminOut = new PrintWriter(adminSocket.getOutputStream(), true);
         adminIn = new BufferedReader(new InputStreamReader(adminSocket.getInputStream()));
+        new Thread(this::readResponses).start();
 
+        // Set the protocol version
+        setProtocol("6.2");
+        registerClientApp("SARP_GUVEN_50892", "1");
 
         dataSocket = new Socket(HOST, DATA_PORT);
         dataOut = new PrintWriter(dataSocket.getOutputStream(), true);
         dataIn = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()));
-        // Set the protocol version
-        setProtocol("6.2");
 
         // Register your application with the feed
-        registerClientApp("SARP_GUVEN_50892", "1");
 
-        //requestData("AAPL");
+        requestData("AAPL");
     }
 
     public void setProtocol(String version) throws IOException {
@@ -55,6 +56,7 @@ public class IQFeedService {
     public void requestData(String symbol) throws IOException {
         String command = String.format("w%s\r\n", symbol);
         dataOut.println(command);
+        dataOut.flush();  // Ensure the command is sent immediately
 
         // Assuming that the data will be received on the next line
         // (check the IQFeed documentation to confirm how the data will be sent)
@@ -68,6 +70,17 @@ public class IQFeedService {
 
         String response = adminIn.readLine();
         System.out.println(response);  // Log the response
+    }
+
+    public void readResponses() {
+        String line;
+        try {
+            while ((line = dataIn.readLine()) != null) {
+                System.out.println(line);  // Print each response line to the console
+            }
+        } catch (IOException e) {
+            e.printStackTrace();  // Print any exceptions to the console
+        }
     }
 
     @PreDestroy
