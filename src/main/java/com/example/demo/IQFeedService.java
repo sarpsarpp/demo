@@ -41,7 +41,7 @@ public class IQFeedService {
         // Register your application with the feed
         registerClientApp("SARP_GUVEN_50892", "1");
 
-        requestData("AAPL");
+        //requestData("AAPL");
     }
 
     public void setProtocol(String version) throws IOException {
