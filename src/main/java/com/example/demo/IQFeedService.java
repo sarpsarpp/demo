@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 public class IQFeedService {
@@ -27,6 +29,7 @@ public class IQFeedService {
     private BufferedReader dataIn;
     private Path dir;
     private Map<String, Double> optionValues = new HashMap<>();
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10);  // Create a thread pool with 10 threads
 
     @Autowired
     public IQFeedService(){
@@ -55,13 +58,7 @@ public class IQFeedService {
         updateFields();
         // Register your application with the feed
 
-        requestData("DCORN.Z");
-        requestData("DPORN.Z");
-        requestData("TCORA.Z");
-        requestData("TCORD.Z");
-        requestData("TPORA.Z");
-        requestData("TPORD.Z");
-
+        executeReqs();
     }
 
     public void setProtocol(String version) throws IOException {
@@ -70,6 +67,51 @@ public class IQFeedService {
 
         String response = adminIn.readLine();
         System.out.println(response);  // Log the response
+    }
+    public void executeReqs(){
+        executorService.submit(() -> {
+            try {
+                requestData("DCORN.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("DPORN.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("TCORA.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("TCORD.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("TPORA.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("TPORD.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
     }
 
     public void requestData(String symbol) throws IOException {
@@ -103,11 +145,12 @@ public class IQFeedService {
     }
 
     public void readResponses() {
+        System.out.println("read responses");
+
         String line;
         try {
             while ((line = dataIn.readLine()) != null) {
                 //System.out.println(line);  // Print each response line to the console
-
                 if (line.startsWith("Q,")) {
                     processQMessage(line);
                 }
@@ -120,7 +163,7 @@ public class IQFeedService {
     private void processQMessage(String message) {
         // Split the message by comma
         String[] parts = message.split(",");
-
+        System.out.println("process q");
         // Ensure the message has at least three parts (Q, name, value)
         if (parts.length >= 3) {
             String name = parts[1];
@@ -138,6 +181,7 @@ public class IQFeedService {
     @Scheduled(fixedRate = 15000)
     public void writeTable(){
         String outputFileName = this.dir + "/Bookmap/OptionCalculations.txt";
+        System.out.println("write table");
         try {
             // Use BufferedWriter for efficient writing
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName));
@@ -153,7 +197,6 @@ public class IQFeedService {
             // Handle exceptions
             e.printStackTrace();
         }
-
     }
     @PreDestroy
     public void cleanup() throws IOException {
