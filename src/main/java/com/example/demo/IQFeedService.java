@@ -2,13 +2,16 @@ package com.example.demo;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class IQFeedService {
@@ -16,14 +19,25 @@ public class IQFeedService {
     private final String HOST = "127.0.0.1";
     private final int ADMIN_PORT = 9300;
     private final int DATA_PORT = 5009;
-
     private Socket adminSocket;
     private Socket dataSocket;
     private PrintWriter adminOut;
     private PrintWriter dataOut;
     private BufferedReader adminIn;
     private BufferedReader dataIn;
+    private Path dir;
+    private Map<String, Double> optionValues = new HashMap<>();
 
+    @Autowired
+    public IQFeedService(){
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("win")){
+            this.dir = Paths.get("C:\\ftgt\\ALI_INDVAL");
+        }
+        else if (os.contains("mac")){
+            this.dir =  Paths.get("/Users/sarpguven/Desktop/trading/ftgt/ALI_INDVAL");
+        }
+    }
     @PostConstruct
     public void init() throws IOException {
         // Establish a TCP/IP connection to IQFeed's IQConnect
@@ -92,13 +106,55 @@ public class IQFeedService {
         String line;
         try {
             while ((line = dataIn.readLine()) != null) {
-                System.out.println(line);  // Print each response line to the console
+                //System.out.println(line);  // Print each response line to the console
+
+                if (line.startsWith("Q,")) {
+                    processQMessage(line);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();  // Print any exceptions to the console
         }
     }
 
+    private void processQMessage(String message) {
+        // Split the message by comma
+        String[] parts = message.split(",");
+
+        // Ensure the message has at least three parts (Q, name, value)
+        if (parts.length >= 3) {
+            String name = parts[1];
+            String valueString = parts[2];
+            try{
+                Double value = Double.parseDouble(valueString);
+                this.optionValues.put(name, value);
+            }catch (NumberFormatException e) {
+                System.err.println("Failed to parse value as double for message: " + message);
+                e.printStackTrace();  // Print the exception to the console
+            }
+        }
+    }
+
+    @Scheduled(fixedRate = 15000)
+    public void writeTable(){
+        String outputFileName = this.dir + "/Bookmap/OptionCalculations.txt";
+        try {
+            // Use BufferedWriter for efficient writing
+            BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName));
+            // Write VIX values
+            for (String key : this.optionValues.keySet()) {
+                writer.write(key + ", " + optionValues.get(key));
+                writer.newLine();
+            }
+            // Always close the writer when done
+            writer.close();
+
+        } catch(IOException e) {
+            // Handle exceptions
+            e.printStackTrace();
+        }
+
+    }
     @PreDestroy
     public void cleanup() throws IOException {
         // Close the resources
