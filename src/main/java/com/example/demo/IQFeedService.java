@@ -181,7 +181,7 @@ public class IQFeedService {
 
     @Scheduled(fixedRate = 15000)
     public void writeTable(){
-        String outputFileName = this.dir + "/Bookmap/OptionCalculations.txt";
+        String outputFileName = this.dir + "/OptionCalculations.txt";
         System.out.println("write table");
         try {
             // Use BufferedWriter for efficient writing
