@@ -105,6 +105,7 @@ public class IQFeedService {
                 throw new RuntimeException(e);
             }
         });
+
         executorService.submit(() -> {
             try {
                 requestData("TPORD.Z");
@@ -112,6 +113,37 @@ public class IQFeedService {
                 throw new RuntimeException(e);
             }
         });
+        executorService.submit(() -> {
+            try {
+                requestData("VIX1D.XO");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("VIX9D.XO");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("VIX.XO");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("@VX1X23");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+
+
 
     }
 
