@@ -183,7 +183,7 @@ public class IQFeedService {
         String line;
         try {
             while ((line = dataIn.readLine()) != null) {
-                //System.out.println(line);  // Print each response line to the console
+                System.out.println(line);  // Print each response line to the console
                 if (line.startsWith("Q,")) {
                     processQMessage(line);
                 }
