@@ -136,7 +136,7 @@ public class IQFeedService {
         });
         executorService.submit(() -> {
             try {
-                requestData("@VX1X23");
+                requestData("@VXX23");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
