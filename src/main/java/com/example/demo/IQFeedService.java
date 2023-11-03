@@ -31,7 +31,8 @@ public class IQFeedService {
     private Path dir;
     private Map<String, Double> optionValues = new HashMap<>();
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);  // Create a thread pool with 10 threads
-
+    private final String es = "@ESZ23";
+    private final String vixFutures = "@VXX23";
     @Autowired
     public IQFeedService(){
         String os = System.getProperty("os.name").toLowerCase();
@@ -136,14 +137,14 @@ public class IQFeedService {
         });
         executorService.submit(() -> {
             try {
-                requestData("@VXX23");
+                requestData(vixFutures);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
         executorService.submit(() -> {
             try {
-                requestData("@ESZ23");
+                requestData(es);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -207,7 +208,12 @@ public class IQFeedService {
         // Ensure the message has at least three parts (Q, name, value)
         if (parts.length >= 3) {
             String name = parts[1];
-            String valueString = parts[2];
+            String valueString = "";
+            if(name.equals(es)){
+                 valueString = parts[3];
+            }else{
+                 valueString = parts[2];
+            }
             try{
                 Double value = Double.parseDouble(valueString);
                 this.optionValues.put(name, value);
