@@ -33,7 +33,7 @@ public class IQFeedService {
     private BufferedReader adminIn;
     private BufferedReader dataIn;
     private Path dir;
-    private final Map<String, List<Double>> optionValues = new HashMap<>();
+    private final Map<String, List<String>> optionValues = new HashMap<>();
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);  // Create a thread pool with 10 threads
     private final String es = "@ESZ23";
     private final String vixFutures = "@VXX23";
@@ -210,11 +210,11 @@ public class IQFeedService {
         System.out.println("process q");
         if (parts.length >= 3) {
             String name = parts[1];
-            List<Double> values = new ArrayList<>();
+            List<String> values = new ArrayList<>();
             for (int i = 2; i < parts.length; i++) {
                 try {
-                    Double value = Double.parseDouble(parts[i]);
-                    values.add(value);
+                    //Double value = Double.parseDouble(parts[i]);
+                    values.add(parts[i]);
                 } catch (NumberFormatException e) {
                     System.err.println("Failed to parse value as double for message: " + message);
                     e.printStackTrace();
@@ -231,8 +231,8 @@ public class IQFeedService {
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName));
             for (String key : this.optionValues.keySet()) {
-                List<Double> values = this.optionValues.get(key);
-                String valuesString = String.join(", ", values.stream().map(String::valueOf).collect(Collectors.toList()));
+                List<String> values = this.optionValues.get(key);
+                String valuesString = values.stream().map(String::valueOf).collect(Collectors.joining(", "));
                 writer.write(key + ", " + valuesString);
                 writer.newLine();
             }
