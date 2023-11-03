@@ -166,7 +166,7 @@ public class IQFeedService {
     }
 
     public void updateFields() throws IOException {
-        String command = "S,SELECT UPDATE FIELDS,Last,Change From Open\r\n";
+        String command = "S,SELECT UPDATE FIELDS,Last,Change From Open,Percent Change,Change\r\n";
         dataOut.println(command);
         dataOut.flush();  // Ensure the command is sent immediately
 
