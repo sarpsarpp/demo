@@ -141,6 +141,13 @@ public class IQFeedService {
                 throw new RuntimeException(e);
             }
         });
+        executorService.submit(() -> {
+            try {
+                requestData("@ESZ23");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
 
 
@@ -159,7 +166,7 @@ public class IQFeedService {
     }
 
     public void updateFields() throws IOException {
-        String command = "S,SELECT UPDATE FIELDS,Last,Close\r\n";
+        String command = "S,SELECT UPDATE FIELDS,Last,Change From Open\r\n";
         dataOut.println(command);
         dataOut.flush();  // Ensure the command is sent immediately
 
