@@ -11,10 +11,14 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+
 @EnableScheduling
 @Service
 public class IQFeedService {
@@ -29,7 +33,7 @@ public class IQFeedService {
     private BufferedReader adminIn;
     private BufferedReader dataIn;
     private Path dir;
-    private Map<String, Double> optionValues = new HashMap<>();
+    private final Map<String, List<Double>> optionValues = new HashMap<>();
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);  // Create a thread pool with 10 threads
     private final String es = "@ESZ23";
     private final String vixFutures = "@VXX23";
@@ -202,45 +206,38 @@ public class IQFeedService {
     }
 
     private void processQMessage(String message) {
-        // Split the message by comma
         String[] parts = message.split(",");
         System.out.println("process q");
-        // Ensure the message has at least three parts (Q, name, value)
         if (parts.length >= 3) {
             String name = parts[1];
-            String valueString = "";
-            if(name.equals(es)){
-                 valueString = parts[3];
-            }else{
-                 valueString = parts[2];
+            List<Double> values = new ArrayList<>();
+            for (int i = 2; i < parts.length; i++) {
+                try {
+                    Double value = Double.parseDouble(parts[i]);
+                    values.add(value);
+                } catch (NumberFormatException e) {
+                    System.err.println("Failed to parse value as double for message: " + message);
+                    e.printStackTrace();
+                }
             }
-            try{
-                Double value = Double.parseDouble(valueString);
-                this.optionValues.put(name, value);
-            }catch (NumberFormatException e) {
-                System.err.println("Failed to parse value as double for message: " + message);
-                e.printStackTrace();  // Print the exception to the console
-            }
+            this.optionValues.put(name, values);
         }
     }
 
     @Scheduled(fixedRate = 15000)
-    public void writeTable(){
+    public void writeTable() {
         String outputFileName = this.dir + "/OptionCalculations.txt";
         System.out.println("write table");
         try {
-            // Use BufferedWriter for efficient writing
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName));
-            // Write VIX values
             for (String key : this.optionValues.keySet()) {
-                writer.write(key + ", " + optionValues.get(key));
+                List<Double> values = this.optionValues.get(key);
+                String valuesString = String.join(", ", values.stream().map(String::valueOf).collect(Collectors.toList()));
+                writer.write(key + ", " + valuesString);
                 writer.newLine();
             }
-            // Always close the writer when done
             writer.close();
-
         } catch(IOException e) {
-            // Handle exceptions
             e.printStackTrace();
         }
     }
