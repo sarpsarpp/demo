@@ -153,7 +153,13 @@ public class IQFeedService {
                 throw new RuntimeException(e);
             }
         });
-
+        executorService.submit(() -> {
+            try {
+                requestData("PROM.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
 
 
