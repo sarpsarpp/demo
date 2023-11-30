@@ -162,7 +162,7 @@ public class IQFeedService {
         });
         executorService.submit(() -> {
             try {
-                requestData("VOLQ.X");
+                requestData("VXN.XO");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
