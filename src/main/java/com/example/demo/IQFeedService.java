@@ -36,7 +36,7 @@ public class IQFeedService {
     private final Map<String, List<String>> optionValues = new HashMap<>();
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);  // Create a thread pool with 10 threads
     private final String es = "@ESZ23";
-    private final String vixFutures = "@VXX23";
+    private final String vixFutures = "@VXZ23";// @VXZ23	CBOE VOLATILITY INDEX December 2023
     @Autowired
     public IQFeedService(){
         String os = System.getProperty("os.name").toLowerCase();
