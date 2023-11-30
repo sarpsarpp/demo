@@ -245,7 +245,11 @@ public class IQFeedService {
             for (String key : this.optionValues.keySet()) {
                 List<String> values = this.optionValues.get(key);
                 String valuesString = values.stream().map(String::valueOf).collect(Collectors.joining(", "));
-                writer.write(key + ", " + valuesString);
+                if(key.equals(vixFutures)){
+                    writer.write("vixFutures" + ", " + valuesString);
+                }else{
+                    writer.write(key + ", " + valuesString);
+                }
                 writer.newLine();
             }
             writer.close();
