@@ -167,6 +167,13 @@ public class IQFeedService {
                 throw new RuntimeException(e);
             }
         });
+        executorService.submit(() -> {
+            try {
+                requestData("SPIKE.X");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
 
     }
