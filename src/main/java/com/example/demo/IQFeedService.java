@@ -35,7 +35,7 @@ public class IQFeedService {
     private Path dir;
     private final Map<String, List<String>> optionValues = new HashMap<>();
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);  // Create a thread pool with 10 threads
-    private final String es = "@ESH24";
+    private final String es = "@ESM24";
     private final String vixFutures = "@VX#";//
     @Autowired
     public IQFeedService(){
