@@ -287,6 +287,21 @@ public class IQFeedService {
             }
         });
 
+        executorService.submit(() -> {
+            try {
+                requestData("II6A.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("II6D.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
     }
 
     public void requestData(String symbol) throws IOException {
