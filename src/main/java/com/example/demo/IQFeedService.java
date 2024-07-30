@@ -301,6 +301,21 @@ public class IQFeedService {
                 throw new RuntimeException(e);
             }
         });
+        executorService.submit(() -> {
+            try {
+                requestData("M206V.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("M206B.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
 
     }
 
