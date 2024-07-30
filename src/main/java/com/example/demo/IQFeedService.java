@@ -315,7 +315,48 @@ public class IQFeedService {
                 throw new RuntimeException(e);
             }
         });
-
+        executorService.submit(() -> {
+            try {
+                requestData("VI6A.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("VI6D.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("VI5A.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("VI5D.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("VI1A.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("VI1D.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
     }
 
