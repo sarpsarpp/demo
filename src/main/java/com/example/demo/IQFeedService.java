@@ -428,9 +428,33 @@ public class IQFeedService {
                 if (line.startsWith("Q,")) {
                     processQMessage(line);
                 }
+                if (line.startsWith("P,")) {
+                    processPMessage(line);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();  // Print any exceptions to the console
+        }
+    }
+
+    private void processPMessage(String message) {
+        String[] parts = message.split(",");
+        System.out.println("process p");
+        if (parts.length >= 58){
+            String name = parts[1];
+            List<String> values = new ArrayList<>();
+            try{
+                String last = parts[34];
+                String percentChange = parts[58];
+                String changeFromOpen = parts[16];
+                values.add(last);
+                values.add(percentChange);
+                values.add(changeFromOpen);
+            }catch (NumberFormatException e){
+                System.err.println("Failed to parse value as double for message: " + message);
+                e.printStackTrace();
+            }
+            this.optionValues.put(name, values);
         }
     }
 
@@ -474,6 +498,32 @@ public class IQFeedService {
             e.printStackTrace();
         }
     }
+    //this method saves everynight at 18:00 in new york time,
+    // the option values to a file with todays date
+    @Scheduled(cron = "0 0 17 * * *", zone = "America/New_York")
+    public void saveToFile(){
+        String outputFileName = this.dir + "/OptionCalculations" + java.time.LocalDate.now() + ".txt";
+        System.out.println("save to file");
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName));
+            for (String key : this.optionValues.keySet()) {
+                List<String> values = this.optionValues.get(key);
+                String valuesString = values.stream().map(String::valueOf).collect(Collectors.joining(", "));
+                if(key.equals(vixFutures)){
+                    writer.write("vixFutures" + ", " + valuesString);
+                } else {
+                    writer.write(key + ", " + valuesString);
+                }
+                writer.newLine();
+            }
+            writer.close();
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
     @PreDestroy
     public void cleanup() throws IOException {
         // Close the resources
