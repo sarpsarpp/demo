@@ -447,6 +447,7 @@ public class IQFeedService {
                 String last = parts[3];
                 String percentChange = "0";
                 String changeFromOpen = "0";
+                if (name.equals("VIX1D.XO")) values.add(message);
                 values.add(last);
                 values.add(percentChange);
                 values.add(changeFromOpen);
