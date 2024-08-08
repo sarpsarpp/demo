@@ -447,6 +447,7 @@ public class IQFeedService {
                 String last = parts[3];
                 String percentChange = "0";
                 String changeFromOpen = "0";
+                //if (name.equals("VIX1D.XO")) values.add(message);
                 values.add(last);
                 values.add(percentChange);
                 values.add(changeFromOpen);
@@ -456,6 +457,7 @@ public class IQFeedService {
             }
             this.optionValues.put(name, values);
         }
+        System.out.println(optionValues);
     }
 
     private void processQMessage(String message) {
@@ -476,7 +478,7 @@ public class IQFeedService {
         }
     }
 
-    @Scheduled(fixedRate = 15000)
+    @Scheduled(fixedRate = 25000)
     public void writeTable() {
         String outputFileName = this.dir + "/OptionCalculations.txt";
         System.out.println("write table");
@@ -487,8 +489,6 @@ public class IQFeedService {
                 String valuesString = values.stream().map(String::valueOf).collect(Collectors.joining(", "));
                 if(key.equals(vixFutures)){
                     writer.write("vixFutures" + ", " + valuesString);
-                } else if(key.equals("VIX1D.XO")){
-                    writer.write("VIX1D.XO" + ", " + valuesString + "wtf");
                 }
                 else{
                     writer.write(key + ", " + valuesString);
