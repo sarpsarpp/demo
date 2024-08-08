@@ -444,9 +444,9 @@ public class IQFeedService {
             String name = parts[1];
             List<String> values = new ArrayList<>();
             try{
-                String last = parts[2];
-                String percentChange = parts[3];
-                String changeFromOpen = parts[4];
+                String last = parts[3];
+                String percentChange = parts[4];
+                String changeFromOpen = parts[5];
                 values.add(last);
                 values.add(percentChange);
                 values.add(changeFromOpen);
