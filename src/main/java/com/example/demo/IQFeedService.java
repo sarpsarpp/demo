@@ -447,7 +447,6 @@ public class IQFeedService {
                 String last = parts[3];
                 String percentChange = "0";
                 String changeFromOpen = "0";
-                if (name.equals("VIX1D.XO")) values.add(message);
                 values.add(last);
                 values.add(percentChange);
                 values.add(changeFromOpen);
@@ -467,7 +466,6 @@ public class IQFeedService {
             List<String> values = new ArrayList<>();
             for (int i = 2; i < parts.length; i++) {
                 try {
-                    //Double value = Double.parseDouble(parts[i]);
                     values.add(parts[i]);
                 } catch (NumberFormatException e) {
                     System.err.println("Failed to parse value as double for message: " + message);
@@ -489,7 +487,10 @@ public class IQFeedService {
                 String valuesString = values.stream().map(String::valueOf).collect(Collectors.joining(", "));
                 if(key.equals(vixFutures)){
                     writer.write("vixFutures" + ", " + valuesString);
-                }else{
+                } else if(key.equals("VIX1D.XO")){
+                    writer.write("VIX1D.XO" + ", " + valuesString + "wtf");
+                }
+                else{
                     writer.write(key + ", " + valuesString);
                 }
                 writer.newLine();
