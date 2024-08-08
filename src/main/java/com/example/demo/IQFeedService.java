@@ -72,15 +72,29 @@ public class IQFeedService {
         System.out.println(response);
     }
 
+    public void registerClientApp(String registeredProductId, String productVersion) throws IOException {
+        String command = String.format("S,REGISTER CLIENT APP,%s,%s\r\n", registeredProductId, productVersion);
+        adminOut.println(command);
+        String response = adminIn.readLine();
+        System.out.println(response);
+    }
+    public void updateFields() throws IOException {
+        String command = "S,SELECT UPDATE FIELDS,Last,Percent Change,Change From Open\r\n";
+        dataOut.println(command);
+        dataOut.flush();
+        String response = dataIn.readLine();
+        System.out.println(response);
+    }
+
     public void executeReqs(){
         String[] symbols = {
-                "DCORN.Z", "DPORN.Z", "TCORA.Z", "TCORD.Z", "TPORA.Z", "TPORD.Z",
-                "VIX1D.XO", "VIX9D.XO", "VIX.XO", vixFutures, es, "PROM.Z",
+                "VIX1D.XO", "DCORN.Z", "DPORN.Z", "TCORA.Z", "TCORD.Z", "TPORA.Z", "TPORD.Z",
+                "VIX9D.XO", "VIX.XO", "PROM.Z",
                 "VXN.XO", "SPIKE.X", "VXGOG.XO", "VXAPL.XO", "VXAZN.XO", "VXGS.XO",
                 "JV6T.Z", "JV5T.Z", "JV1T.Z", "JVRT.Z", "DI6N.Z", "DI5N.Z", "DI1N.Z",
                 "DIRN.Z", "VCORA.Z", "VCORD.Z", "VPORA.Z", "VPORD.Z", "DCORA.Z",
                 "DCORD.Z", "DPORA.Z", "DPORD.Z", "II6A.Z", "II6D.Z", "M206V.Z",
-                "M206B.Z", "VI6A.Z", "VI6D.Z", "VI5A.Z", "VI5D.Z", "VI1A.Z", "VI1D.Z"
+                "M206B.Z", "VI6A.Z", "VI6D.Z", "VI5A.Z", "VI5D.Z", "VI1A.Z", "VI1D.Z", vixFutures, es,
         };
 
         for (String symbol : symbols) {
@@ -102,20 +116,7 @@ public class IQFeedService {
         System.out.println(response);
     }
 
-    public void updateFields() throws IOException {
-        String command = "S,SELECT UPDATE FIELDS,Last,Percent Change,Change From Open\r\n";
-        dataOut.println(command);
-        dataOut.flush();
-        String response = dataIn.readLine();
-        System.out.println(response);
-    }
 
-    public void registerClientApp(String registeredProductId, String productVersion) throws IOException {
-        String command = String.format("S,REGISTER CLIENT APP,%s,%s\r\n", registeredProductId, productVersion);
-        adminOut.println(command);
-        String response = adminIn.readLine();
-        System.out.println(response);
-    }
 
     public void readResponses() {
         System.out.println("read responses");
