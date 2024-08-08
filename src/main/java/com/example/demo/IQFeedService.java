@@ -440,13 +440,13 @@ public class IQFeedService {
     private void processPMessage(String message) {
         String[] parts = message.split(",");
         System.out.println("process p");
-        if (parts.length >= 5){
+        if (parts.length >= 3){
             String name = parts[1];
             List<String> values = new ArrayList<>();
             try{
                 String last = parts[3];
-                String percentChange = parts[4];
-                String changeFromOpen = parts[5];
+                String percentChange = "0";
+                String changeFromOpen = "0";
                 values.add(last);
                 values.add(percentChange);
                 values.add(changeFromOpen);
