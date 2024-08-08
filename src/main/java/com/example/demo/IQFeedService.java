@@ -447,7 +447,6 @@ public class IQFeedService {
                 String last = parts[3];
                 String percentChange = "0";
                 String changeFromOpen = "0";
-                //if (name.equals("VIX1D.XO")) values.add(message);
                 values.add(last);
                 values.add(percentChange);
                 values.add(changeFromOpen);
@@ -457,7 +456,6 @@ public class IQFeedService {
             }
             this.optionValues.put(name, values);
         }
-        System.out.println(optionValues);
     }
 
     private void processQMessage(String message) {
@@ -478,7 +476,7 @@ public class IQFeedService {
         }
     }
 
-    @Scheduled(fixedRate = 25000)
+    @Scheduled(fixedRate = 30000)
     public void writeTable() {
         String outputFileName = this.dir + "/OptionCalculations.txt";
         System.out.println("write table");
