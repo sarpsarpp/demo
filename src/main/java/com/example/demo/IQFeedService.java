@@ -11,21 +11,28 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @EnableScheduling
 @Service
 public class IQFeedService {
 
-    private final String HOST = "127.0.0.1";
-    private final int ADMIN_PORT = 9300;
-    private final int DATA_PORT = 5009;
+    private static final String HOST = "127.0.0.1";
+    private static final int ADMIN_PORT = 9300;
+    private static final int DATA_PORT = 5009;
+    private static final List<String> SYMBOLS = Arrays.asList(
+            "DCORN.Z", "DPORN.Z", "TCORA.Z", "TCORD.Z", "TPORA.Z", "TPORD.Z", "VIX1D.XO", "VIX9D.XO", "VIX.XO",
+            "@VX#", "@ESU24", "PROM.Z", "VXN.XO", "SPIKE.X", "VXGOG.XO", "VXAPL.XO", "VXAZN.XO", "VXGS.XO",
+            "JV6T.Z", "JV5T.Z", "JV1T.Z", "JVRT.Z", "DI6N.Z", "DI5N.Z", "DI1N.Z", "DIRN.Z", "VCORA.Z",
+            "VCORD.Z", "VPORA.Z", "VPORD.Z", "DCORA.Z", "DCORD.Z", "DPORA.Z", "DPORD.Z", "II6A.Z", "II6D.Z",
+            "M206V.Z", "M206B.Z", "VI6A.Z", "VI6D.Z", "VI5A.Z", "VI5D.Z", "VI1A.Z", "VI1D.Z"
+    );
+
     private Socket adminSocket;
     private Socket dataSocket;
     private PrintWriter adminOut;
@@ -33,456 +40,160 @@ public class IQFeedService {
     private BufferedReader adminIn;
     private BufferedReader dataIn;
     private Path dir;
-    private final Map<String, List<String>> optionValues = new HashMap<>();
-    private final ExecutorService executorService = Executors.newFixedThreadPool(10);  // Create a thread pool with 10 threads
-    private final String es = "@ESU24";
-    private final String vixFutures = "@VX#";//
+    private final Map<String, List<String>> optionValues = new ConcurrentHashMap<>();
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
+
     @Autowired
-    public IQFeedService(){
+    public IQFeedService() {
         String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")){
-            this.dir = Paths.get("C:\\ftgt\\ALI_INDVAL");
-        }
-        else if (os.contains("mac")){
-            this.dir =  Paths.get("/Users/sarpguven/Desktop/trading/ftgt/ALI_INDVAL");
-        }
+        this.dir = os.contains("win") ?
+                Paths.get("C:\\ftgt\\ALI_INDVAL") :
+                Paths.get("/Users/sarpguven/Desktop/trading/ftgt/ALI_INDVAL");
     }
+
     @PostConstruct
     public void init() throws IOException {
-        // Establish a TCP/IP connection to IQFeed's IQConnect
-        adminSocket = new Socket(HOST, ADMIN_PORT);
-        adminOut = new PrintWriter(adminSocket.getOutputStream(), true);
-        adminIn = new BufferedReader(new InputStreamReader(adminSocket.getInputStream()));
-        dataSocket = new Socket(HOST, DATA_PORT);
-        dataOut = new PrintWriter(dataSocket.getOutputStream(), true);
-        dataIn = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()));
-        new Thread(this::readResponses).start();
-
-        // Set the protocol version
+        establishConnections();
         setProtocol("6.2");
         registerClientApp("SARP_GUVEN_50892", "1");
         updateFields();
-        // Register your application with the feed
+        requestSymbolsData();
+    }
 
-        executeReqs();
+    private void establishConnections() throws IOException {
+        adminSocket = new Socket(HOST, ADMIN_PORT);
+        adminOut = new PrintWriter(adminSocket.getOutputStream(), true);
+        adminIn = new BufferedReader(new InputStreamReader(adminSocket.getInputStream()));
+
+        dataSocket = new Socket(HOST, DATA_PORT);
+        dataOut = new PrintWriter(dataSocket.getOutputStream(), true);
+        dataIn = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()));
+
+        executorService.submit(this::readResponses);
     }
 
     public void setProtocol(String version) throws IOException {
-        String command = String.format("S,SET PROTOCOL,%s\r\n", version);
-        adminOut.println(command);
-
-        String response = adminIn.readLine();
-        System.out.println(response);  // Log the response
-    }
-    public void executeReqs(){
-        executorService.submit(() -> {
-            try {
-                requestData("DCORN.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("DPORN.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("TCORA.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("TCORD.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("TPORA.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        executorService.submit(() -> {
-            try {
-                requestData("TPORD.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VIX1D.XO");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VIX9D.XO");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VIX.XO");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData(vixFutures);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData(es);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("PROM.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VXN.XO");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("SPIKE.X");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VXGOG.XO");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VXAPL.XO");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VXAZN.XO");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VXGS.XO");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("JV6T.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("JV5T.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("JV1T.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("JVRT.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("DI6N.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("DI5N.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("DI1N.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("DIRN.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VCORA.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VCORD.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VPORA.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VPORD.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("DCORA.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("DCORD.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("DPORA.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("DPORD.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        executorService.submit(() -> {
-            try {
-                requestData("II6A.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("II6D.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("M206V.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("M206B.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VI6A.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VI6D.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VI5A.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VI5D.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VI1A.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executorService.submit(() -> {
-            try {
-                requestData("VI1D.Z");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-    }
-
-    public void requestData(String symbol) throws IOException {
-        String command = String.format("w%s\r\n", symbol);
-        dataOut.println(command);
-        dataOut.flush();  // Ensure the command is sent immediately
-
-        // Assuming that the data will be received on the next line
-        // (check the IQFeed documentation to confirm how the data will be sent)
-        String response = dataIn.readLine();
-        System.out.println(response);  // This will print the response to the console
-    }
-
-    public void updateFields() throws IOException {
-        String command = "S,SELECT UPDATE FIELDS,Last,Percent Change,Change From Open\r\n";//percent change for @ES
-        dataOut.println(command);
-        dataOut.flush();  // Ensure the command is sent immediately
-
-        // Assuming that the data will be received on the next line
-        // (check the IQFeed documentation to confirm how the data will be sent)
-        String response = dataIn.readLine();
-        System.out.println(response);  // This will print the response to the console
+        sendAdminCommand(String.format("S,SET PROTOCOL,%s\r\n", version));
     }
 
     public void registerClientApp(String registeredProductId, String productVersion) throws IOException {
-        String command = String.format("S,REGISTER CLIENT APP,%s,%s\r\n", registeredProductId, productVersion);
-        adminOut.println(command);
-
-        String response = adminIn.readLine();
-        System.out.println(response);  // Log the response
+        sendAdminCommand(String.format("S,REGISTER CLIENT APP,%s,%s\r\n", registeredProductId, productVersion));
     }
 
-    public void readResponses() {
-        System.out.println("read responses");
+    public void updateFields() throws IOException {
+        sendDataCommand("S,SELECT UPDATE FIELDS,Last,Percent Change,Change From Open\r\n");
+    }
 
+    private void sendAdminCommand(String command) throws IOException {
+        adminOut.println(command);
+        logResponse(adminIn.readLine());
+    }
+
+    private void sendDataCommand(String command) throws IOException {
+        dataOut.println(command);
+        dataOut.flush();
+        logResponse(dataIn.readLine());
+    }
+
+    private void logResponse(String response) {
+        System.out.println(response); // Use a logger in production
+    }
+
+    private void requestSymbolsData() {
+        SYMBOLS.forEach(symbol -> executorService.submit(() -> {
+            try {
+                requestData(symbol);
+            } catch (IOException e) {
+                e.printStackTrace(); // Improve error handling for robustness
+            }
+        }));
+    }
+
+    public void requestData(String symbol) throws IOException {
+        sendDataCommand(String.format("w%s\r\n", symbol));
+    }
+
+    private void readResponses() {
         String line;
         try {
             while ((line = dataIn.readLine()) != null) {
-                System.out.println(line);  // Print each response line to the console
                 if (line.startsWith("Q,")) {
                     processQMessage(line);
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();  // Print any exceptions to the console
+            e.printStackTrace();
         }
     }
 
     private void processQMessage(String message) {
         String[] parts = message.split(",");
-        System.out.println("process q");
         if (parts.length >= 3) {
             String name = parts[1];
-            List<String> values = new ArrayList<>();
-            for (int i = 2; i < parts.length; i++) {
-                try {
-                    //Double value = Double.parseDouble(parts[i]);
-                    values.add(parts[i]);
-                } catch (NumberFormatException e) {
-                    System.err.println("Failed to parse value as double for message: " + message);
-                    e.printStackTrace();
-                }
-            }
-            this.optionValues.put(name, values);
+            List<String> values = Arrays.asList(Arrays.copyOfRange(parts, 2, parts.length));
+            optionValues.put(name, values);
         }
     }
 
     @Scheduled(fixedRate = 15000)
     public void writeTable() {
         String outputFileName = this.dir + "/OptionCalculations.txt";
-        System.out.println("write table");
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName));
-            for (String key : this.optionValues.keySet()) {
-                List<String> values = this.optionValues.get(key);
-                String valuesString = values.stream().map(String::valueOf).collect(Collectors.joining(", "));
-                if(key.equals(vixFutures)){
-                    writer.write("vixFutures" + ", " + valuesString);
-                }else{
-                    writer.write(key + ", " + valuesString);
-                }
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName))) {
+            for (Map.Entry<String, List<String>> entry : optionValues.entrySet()) {
+                String key = entry.getKey().equals("@VX#") ? "vixFutures" : entry.getKey();
+                String valuesString = String.join(", ", entry.getValue());
+                writer.write(key + ", " + valuesString);
                 writer.newLine();
             }
-            writer.close();
-        } catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    @PreDestroy
-    public void cleanup() throws IOException {
-        // Close the resources
-        adminIn.close();
-        adminOut.close();
-        adminSocket.close();
 
-        dataIn.close();
-        dataOut.close();
-        dataSocket.close();
+    @PreDestroy
+    public void cleanup() {
+        closeResource(adminIn);
+        closeResource(adminOut);
+        closeResource(adminSocket);
+
+        closeResource(dataIn);
+        closeResource(dataOut);
+        closeResource(dataSocket);
+
+        executorService.shutdown();
+    }
+
+    private void closeResource(Closeable resource) {
+        if (resource != null) {
+            try {
+                resource.close();
+            } catch (IOException e) {
+                e.printStackTrace(); // Replace with logger in production
+            }
+        }
+    }
+
+    @Scheduled(cron = "0 30 16 * * ?", zone = "America/New_York")
+    public void saveDailyOptionCalculations() {
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("America/New_York"));
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMyy");
+        String fileName = "OptionCalculations" + now.format(dateFormatter) + ".txt";
+        Path savePath = Paths.get(dir.toString(), "save", fileName);
+
+        File saveDir = savePath.getParent().toFile();
+        if (!saveDir.exists()) {
+            saveDir.mkdirs(); // Create the save directory if it doesn't exist
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(savePath.toFile()))) {
+            for (Map.Entry<String, List<String>> entry : optionValues.entrySet()) {
+                String key = entry.getKey().equals("@VX#") ? "vixFutures" : entry.getKey();
+                String valuesString = String.join(", ", entry.getValue());
+                writer.write(key + ", " + valuesString);
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace(); // Replace with a logger in production
+        }
     }
 }
