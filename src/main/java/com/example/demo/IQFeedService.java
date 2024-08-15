@@ -11,6 +11,9 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -484,5 +487,29 @@ public class IQFeedService {
         dataIn.close();
         dataOut.close();
         dataSocket.close();
+    }
+
+    @Scheduled(cron = "10 40 19 * * ?", zone = "America/New_York")
+    public void saveDailyOptionCalculations() {
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("America/New_York"));
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMyy");
+        String fileName = "OptionCalculations" + now.format(dateFormatter) + ".txt";
+        Path savePath = Paths.get(dir.toString(), "save", fileName);
+
+        File saveDir = savePath.getParent().toFile();
+        if (!saveDir.exists()) {
+            saveDir.mkdirs(); // Create the save directory if it doesn't exist
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(savePath.toFile()))) {
+            for (Map.Entry<String, List<String>> entry : optionValues.entrySet()) {
+                String key = entry.getKey().equals("@VX#") ? "vixFutures" : entry.getKey();
+                String valuesString = String.join(", ", entry.getValue());
+                writer.write(key + ", " + valuesString);
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace(); // Replace with a logger in production
+        }
     }
 }
