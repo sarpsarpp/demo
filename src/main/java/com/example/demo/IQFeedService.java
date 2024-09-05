@@ -416,6 +416,34 @@ public class IQFeedService {
                 throw new RuntimeException(e);
             }
         });
+        executorService.submit(() -> {
+            try {
+                requestData("ECOEA.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("EPOED.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("ECOED.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("EPOEA.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
     }
 
