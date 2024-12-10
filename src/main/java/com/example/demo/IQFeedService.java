@@ -123,6 +123,35 @@ public class IQFeedService {
         });
         executorService.submit(() -> {
             try {
+                requestData("TCOA.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("TCOD.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("TPOA.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executorService.submit(() -> {
+            try {
+                requestData("TPOD.Z");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        executorService.submit(() -> {
+            try {
                 requestData("VIX1D.XO");
             } catch (IOException e) {
                 throw new RuntimeException(e);
