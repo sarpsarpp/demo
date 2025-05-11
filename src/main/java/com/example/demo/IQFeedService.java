@@ -573,23 +573,52 @@ public class IQFeedService {
     public void writeTable() {
         String outputFileName = this.dir + "/OptionCalculations.txt";
         System.out.println("write table");
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName));
-            for (String key : this.optionValues.keySet()) {
-                List<String> values = this.optionValues.get(key);
-                String valuesString = values.stream().map(String::valueOf).collect(Collectors.joining(", "));
-                if(key.equals(vixFutures)){
-                    writer.write("vixFutures" + ", " + valuesString);
-                }else{
-                    writer.write(key + ", " + valuesString);
+
+        // Create a map to store existing data
+        Map<String, List<String>> existingData = new HashMap<>();
+
+        // Read existing file if it exists
+        File outputFile = new File(outputFileName);
+        if (outputFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(outputFile))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] parts = line.split(", ", 2); // Split only on first comma+space
+                    if (parts.length >= 2) {
+                        String symbol = parts[0];
+                        List<String> values = new ArrayList<>();
+                        String[] valueParts = parts[1].split(", ");
+                        for (String valuePart : valueParts) {
+                            values.add(valuePart);
+                        }
+                        existingData.put(symbol, values);
+                    }
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // Merge current data with existing data (current data takes precedence)
+        for (Map.Entry<String, List<String>> entry : this.optionValues.entrySet()) {
+            String key = entry.getKey().equals(vixFutures) ? "vixFutures" : entry.getKey();
+            existingData.put(key, entry.getValue());
+        }
+
+        // Write the merged data back to the file
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName))) {
+            for (Map.Entry<String, List<String>> entry : existingData.entrySet()) {
+                String valuesString = entry.getValue().stream()
+                        .map(String::valueOf)
+                        .collect(Collectors.joining(", "));
+                writer.write(entry.getKey() + ", " + valuesString);
                 writer.newLine();
             }
-            writer.close();
         } catch(IOException e) {
             e.printStackTrace();
         }
     }
+
     @PreDestroy
     public void cleanup() throws IOException {
         // Close the resources
